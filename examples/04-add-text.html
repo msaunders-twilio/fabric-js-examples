@@ -1,0 +1,96 @@
+<html>
+  <head>
+    <title>04 - Adding text</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.js"></script>
+
+    <style>
+      body {
+        max-width: 980px;
+        margin: 20px auto;
+      }
+      canvas {
+        border: 2px dashed #d1d5db;
+      }
+      .demo {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .row {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo">
+      <h1>Image cropping</h1>
+
+      <div class="row">
+        <button id="add-text">Add text</button>
+      </div>
+
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <div>
+      <h3>References:</h3>
+      <ul>
+        <li>
+          <a href="https://shajal-kumer.github.io/crop-image-using-fabric.js/">Cropping example</a>
+        </li>
+      </ul>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+
+      const CANVAS_WIDTH = 800;
+      const CANVAS_HEIGHT = 500;
+      const IMAGE_URL = "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2343&q=80";
+      let img = null;
+      let selectionRect = null;
+
+      // Create a wrapper around native canvas element (with id="canvas")
+      const canvas = new fabric.Canvas(
+        'canvas',
+        {
+          // interactive: false,
+          width: CANVAS_WIDTH,
+          height: CANVAS_HEIGHT,
+          preserveObjectStacking: true
+        }
+      );
+
+      // Add image to canvas
+      fabric.Image.fromURL(
+        IMAGE_URL,
+        (imgObj) => {
+          img = imgObj;
+          img.scaleToWidth(CANVAS_WIDTH, false);
+
+          img.set({
+            lockMovementX: true,
+            lockMovementY: true,
+          })
+
+          canvas.add(img);
+        },
+        { crossOrigin: 'anonymous' }
+      );
+
+      $('add-text').addEventListener('click', () => {
+        const text = new fabric.Text('Meow!', {
+          fill: 'white'
+        });
+
+        // Render the Text on Canvas
+        canvas.add(text);
+      });
+    </script>
+  </body>
+</html>

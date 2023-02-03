@@ -1,0 +1,185 @@
+<html>
+  <head>
+    <title>03 - Image cropping</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.js"></script>
+
+    <style>
+      body {
+        max-width: 980px;
+        margin: 20px auto;
+      }
+      canvas {
+        border: 2px dashed #d1d5db;
+      }
+      .demo {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .row {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo">
+      <h1>Image cropping</h1>
+
+      <div class="row">
+        <button id="crop" style="display: none;">Crop</button>
+        <button id="start-crop" style="border: 1px solid #000000">Mark Crop Area</button>
+        <a id="download" href="" style="display: none;">Download link</a>
+      </div>
+
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <div>
+      <h3>References:</h3>
+      <ul>
+        <li>
+          <a href="https://shajal-kumer.github.io/crop-image-using-fabric.js/">Cropping example</a>
+        </li>
+      </ul>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+
+      const CANVAS_WIDTH = 800;
+      const CANVAS_HEIGHT = 500;
+      const IMAGE_URL = "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2343&q=80";
+      let img = null;
+      let selectionRect = null;
+
+      // Create a wrapper around native canvas element (with id="canvas")
+      const canvas = new fabric.Canvas(
+        'canvas',
+        {
+          // interactive: false,
+          width: CANVAS_WIDTH,
+          height: CANVAS_HEIGHT,
+        }
+      );
+
+      // Add image to canvas
+      fabric.Image.fromURL(
+        IMAGE_URL,
+        (imgObj) => {
+          img = imgObj;
+          img.scaleToWidth(CANVAS_WIDTH, false);
+
+          img.set({
+            lockMovementX: true,
+            lockMovementY: true,
+          })
+
+          canvas.add(img);
+        },
+        { crossOrigin: 'anonymous' }
+      );
+
+      function addSelectionRect() {
+        //  Setup crop selection rectangle
+        selectionRect = new fabric.Rect({
+          fill: "rgba(0,0,0,0.3)",
+          originX: "left",
+          originY: "top",
+          stroke: "black",
+          opacity: 1,
+          width: img.width,
+          height: img.height,
+          hasRotatingPoint: false,
+          transparentCorners: false,
+          cornerColor: "white",
+          cornerStrokeColor: "black",
+          borderColor: "black",
+          cornerSize: 12,
+          padding: 0,
+          cornerStyle: "circle",
+          borderDashArray: [5, 5],
+          borderScaleFactor: 1.3,
+        });
+
+        selectionRect.scaleToWidth(300);
+        canvas.centerObject(selectionRect);
+        canvas.add(selectionRect);
+      }
+
+      $('start-crop').addEventListener('click', () => {
+        console.log('--> starting crop');
+
+        addSelectionRect();
+        canvas.setActiveObject(selectionRect);
+        canvas.renderAll();
+        $('start-crop').style.display = 'none';
+        $('crop').style.display = 'block';
+      });
+
+      $('crop').addEventListener('click', () => {
+        console.log('--> cropping');
+
+        $('crop').style.display = 'none';
+        $('start-crop').style.display = 'block';
+
+        // Create mask rectangle for crop
+        const rect = new fabric.Rect({
+          left: selectionRect.left,
+          top: selectionRect.top,
+          width: selectionRect.getScaledWidth(),
+          height: selectionRect.getScaledHeight(),
+          absolutePositioned: true,
+        });
+
+        // Add to the image clipPath property
+        img.clipPath = rect;
+
+        // Remove the mask layer
+        canvas.remove(selectionRect);
+
+        // Init new image instance
+        const cropped = new Image();
+
+        // Set src value of canvas cropped area as toDataURL
+        cropped.src = canvas.toDataURL({
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
+        });
+
+        // After onload clear the canvas and add cropped image to the canvas
+        cropped.onload = function () {
+          canvas.clear();
+          img = new fabric.Image(cropped);
+          // img.left = rect.left;
+          // img.top = rect.top;
+          // img.setCoords();
+
+          img.set({
+            left: 0,
+            top: 0
+          });
+          img.setCoords();
+          img.scaleToHeight(CANVAS_HEIGHT);
+          img.scaleToWidth(CANVAS_WIDTH);
+
+          canvas.clear();
+          canvas.add(img);
+          canvas.renderAll();
+
+          const downloadLink = $('download');
+          downloadLink.href = canvas.toDataURL({ format: "image/jpg" });
+          downloadLink.download = 'cropped-image.png';
+          downloadLink.style.display = 'block';
+        };
+      });
+
+    </script>
+  </body>
+</html>
